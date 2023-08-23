@@ -1,0 +1,5 @@
+pytorch
+deepspeed
+gensim
+scikit-learn
+numpy
