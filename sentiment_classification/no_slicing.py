@@ -17,7 +17,7 @@ OUTPUT_DIM = 2 # 分类数
 EPOCH = 10 # 训练轮数
 LEARNING_RATE = 1e-3 # 学习率
 BATCH_SIZE = 64 # 批次大小
-EXPERTS_NUM = 1 # 专家数量
+EXPERTS_NUM = 4 # 专家数量
 
 IN_FEATURES = HIDDEN_DIM
 HIDDEN_FEATURES = 4 * HIDDEN_DIM
@@ -117,15 +117,6 @@ for i in range(EPOCH):
         accuracies.append(accuracy)
         model_engine.backward(loss)
         model_engine.step()
-    # for index, (labels, matrixes) in enumerate(dataloader):
-    #     prediction = model(matrixes.to(device))
-    #     loss = F.nll_loss(prediction, labels)
-    #     result = torch.max(prediction, dim=1)[1]
-    #     accuracy = torch.eq(result, labels).float().mean()
-    #     accuracies.append(accuracy)
-    #     optimizer.zero_grad()
-    #     loss.backward()
-    #     optimizer.step()
     average = np.array(convert(accuracies)).mean()
     print("Epoch {epoch}: 准确率为{average}".format(epoch=i+1, average=average))
 
@@ -136,7 +127,7 @@ for i in range(EPOCH):
         accuracies = []
         with torch.no_grad():
             for labels, matrixes in dataloader:
-                prediction = model(matrixes.to(device))
+                prediction = model_engine(matrixes.to(device))
                 result = torch.max(prediction, dim=1)[1]
                 accuracies.append(torch.eq(result.to(device), labels.to(device)).float().mean())
                 y_true.append(labels)
