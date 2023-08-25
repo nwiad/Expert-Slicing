@@ -52,9 +52,9 @@ class SlicedFFN(nn.Module): # 专家数为 2，切片数为 2
             chunks=2,
             dim=1
         )
-        # 第二层的 bias 不需要切分，直接分配到两个 GPU 上即可
+        # 第二层的偏置矩阵不需要切分，直接分配到两个 GPU 上即可
 
-        # 将切分后的权重移动到相应的 GPU
+        # 将切分后的参数移动到相应的 GPU
         self.fc_1_weights_0 = nn.Parameter(self.fc_1_weights_0).to(device_ids[0])
         self.fc_1_weights_1 = nn.Parameter(self.fc_1_weights_1).to(device_ids[1])
 
