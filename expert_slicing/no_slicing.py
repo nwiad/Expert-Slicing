@@ -9,22 +9,25 @@ import torch.nn.functional as F
 from sklearn.metrics import f1_score
 import torch.nn as nn
 import deepspeed
+import os
 
-TRUNCATION = 50 # 截断长度
-EMBEDDING_DIM = 50 # 词向量长度
-HIDDEN_DIM = 50 # 隐含层的维度
-OUTPUT_DIM = 2 # 分类数
-EPOCH = 10 # 训练轮数
-LEARNING_RATE = 1e-3 # 学习率
-BATCH_SIZE = 64 # 批次大小
-EXPERTS_NUM = 4 # 专家数量
+EMBEDDING_DIM = 50 # 词向量长度，不可调
+HIDDEN_DIM = 50 # 隐含层的维度，需与词向量长度相同，不可调
+OUTPUT_DIM = 2 # 分类数，不可调
 
-IN_FEATURES = HIDDEN_DIM
-HIDDEN_FEATURES = 4 * HIDDEN_DIM
-OUTPUT_FEATURES = HIDDEN_DIM
+TRUNCATION = 50 # 截断长度，可调
+EPOCH = 10 # 训练轮数，可调
+LEARNING_RATE = 1e-3 # 学习率，可调
+BATCH_SIZE = 64 # 批次大小，可调
+EP_SIZE = int(os.getenv('EP_SIZE')) # 由脚本参数设置
+EXPERTS_NUM = 4 # 专家数量，可调，需要保证能被 EP_SIZE 整除
+
+IN_FEATURES = HIDDEN_DIM # 需与隐含层维度相同，不可调
+HIDDEN_FEATURES = 4 * HIDDEN_DIM # 可调
+OUTPUT_FEATURES = HIDDEN_DIM # 不可调
 
 class FFN(nn.Module):
-    def __init__(self, in_features, hidden_dim, out_features) -> None:
+    def __init__(self, in_features, hidden_dim, out_features):
         super().__init__()
         self.fc1 = nn.Linear(in_features, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, out_features)
@@ -41,7 +44,7 @@ class FFN(nn.Module):
 vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
 validation_path = "dataset/validation.txt"
-save_path = "models/moe.pt"
+save_path = "models/unsliced_moe.pt"
 
 # 读取词向量模型
 vec = gensim.models.KeyedVectors.load_word2vec_format(vec_path, binary=True)
@@ -98,11 +101,11 @@ validation_dataloader = build_dataloader(validation_path)
 device = torch.device("cuda")
 model = SentimentClassificationMoE(
         vocab_size=len(key2index), embedding=vectors, embedding_dim=EMBEDDING_DIM, 
-        expert=FFN(IN_FEATURES, HIDDEN_FEATURES, OUTPUT_FEATURES), 
+        expert=FFN(IN_FEATURES, HIDDEN_FEATURES, OUTPUT_FEATURES), ep_size=EP_SIZE,
         experts_num=EXPERTS_NUM, hidden_size=HIDDEN_DIM, output_dim=OUTPUT_DIM
     ).to(device)
 model_engine, optimizer, _, _ = deepspeed.initialize(model=model, optimizer=Adam(model.parameters(), lr=LEARNING_RATE),
-                                                        model_parameters=model.parameters(), config="no_slicing_config.json")
+                                                        model_parameters=model.parameters(), config="ds_config.json")
 def convert(cuda_list: list):
     return torch.as_tensor(cuda_list).cpu()
 # 训练
