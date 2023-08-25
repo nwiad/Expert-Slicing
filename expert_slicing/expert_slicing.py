@@ -46,7 +46,7 @@ class SlicedFFN(nn.Module): # 专家数为 2，切片数为 2
             chunks=2,
             dim=0
         )
-        # 将权重矩阵按行切分
+        # 将权重矩阵按列切分
         self.fc_2_weights_0, self.fc_2_weights_1 = torch.chunk(
             self.fc_2.weight,
             chunks=2,
