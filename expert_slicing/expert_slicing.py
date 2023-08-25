@@ -82,7 +82,7 @@ class SlicedFFN(nn.Module): # 专家数为 2，切片数为 2
         return out
 
 def slice_expert():
-    return SlicedFFN(IN_FEATURES, HIDDEN_FEATURES, OUTPUT_FEATURES, 4, AVAILABLE_DEVICES)
+    return SlicedFFN(IN_FEATURES, HIDDEN_FEATURES, OUTPUT_FEATURES, AVAILABLE_DEVICES)
 
 vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
