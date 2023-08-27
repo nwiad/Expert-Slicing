@@ -1,2 +1,4 @@
 .DS_Store
-/expert_slicing/__pycache__
+*/__pycache__
+sliced.txt
+unsliced.txt

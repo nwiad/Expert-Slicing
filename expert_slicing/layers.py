@@ -22,9 +22,6 @@ class MLP(nn.Module):
         return output
 
 
-
-
-
 # Column Parallel Linear layer
 class ColumnParallelLinear(torch.nn.Module):
     # Initialize function
@@ -44,7 +41,8 @@ class ColumnParallelLinear(torch.nn.Module):
         self.phase_3_forward_time = phase_3_forward_time
         self.phase_1_forward_time = phase_1_forward_time
         # Divide the weight matrix along the last dimension.
-        world_size = int(os.environ['WORLD_SIZE'])
+        # world_size = int(os.environ['WORLD_SIZE'])
+        world_size = int(os.getenv('TP_SIZE'))
         self.output_size_per_partition = output_size//world_size
         self.skip_bias_add = skip_bias_add
         # Initialize the original weight of the model
@@ -124,7 +122,8 @@ class RowParallelLinear(torch.nn.Module):
         self.phase_3_forward_time = phase_3_forward_time
         self.phase_1_forward_time = phase_1_forward_time
         # Divide the weight matrix along the last dimension.
-        world_size = int(os.environ['WORLD_SIZE'])
+        # world_size = int(os.environ['WORLD_SIZE'])
+        world_size = int(os.getenv('TP_SIZE'))
         self.input_size_per_partition = divide(input_size, world_size)
         self.skip_bias_add = skip_bias_add
         print(self.output_size," ", self.input_size_per_partition)

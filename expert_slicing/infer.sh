@@ -11,12 +11,12 @@ if [ $EXPERT_SLICING -eq 1 ]; then
     fi
     echo "Setting EXPERT_SLICING=1, EP_SIZE=$2, TP_SIZE=$2"
     export TP_SIZE=$2
-    deepspeed --num_gpus $2 train.py
+    deepspeed --num_gpus $2 infer.py
     exit 0
 elif [ $EXPERT_SLICING -eq 0 ]; then
     echo "Setting EXPERT_SLICING=0, EP_SIZE=$2, TP_SIZE=1"
     export TP_SIZE=1
-    deepspeed --num_gpus $2 trian.py
+    deepspeed --num_gpus $2 infer.py
     exit 0
 else
     echo "EXPERT_SLICING must be 0 or 1"

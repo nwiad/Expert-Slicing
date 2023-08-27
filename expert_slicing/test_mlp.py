@@ -128,4 +128,4 @@ for i in range(EPOCH):
             print("f1-score: {}".format(score))
 
 # 保存模型
-# torch.save(model.state_dict(), save_path)
+torch.save(model.state_dict(), save_path)

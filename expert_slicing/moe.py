@@ -28,10 +28,10 @@ class SentimentClassificationMoE(nn.Module):
         self.embedding.weight.data.copy_(tensor_embedding)
         self.experts_num = experts_num
         if expert is not None and not callable(expert_constructor):
-            self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=expert, ep_size=experts_num, num_experts=experts_num)
+            self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=expert, ep_size=experts_num, num_experts=experts_num, min_capacity=0)
         elif callable(expert_constructor):
             assert expert is None, "expert and expert_constructor can't be set at the same time"
-            self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=None, expert_constructor=expert_constructor, ep_size=ep_size, num_experts=experts_num)
+            self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=None, expert_constructor=expert_constructor, ep_size=ep_size, num_experts=experts_num, min_capacity=0)
         self.fc = nn.Linear(hidden_size, output_dim)
 
     def forward(self, x):
@@ -51,14 +51,14 @@ class MoE(nn.Module):
         super().__init__()
         self.experts_num = experts_num
         if expert is not None and not callable(expert_constructor):
-            self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=expert, ep_size=experts_num, num_experts=experts_num)
+            self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=expert, ep_size=experts_num, num_experts=experts_num, min_capacity=0)
         elif callable(expert_constructor):
             assert expert is None, "expert and expert_constructor can't be set at the same time"
-            self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=None, expert_constructor=expert_constructor, ep_size=ep_size, num_experts=experts_num)
+            self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=None, expert_constructor=expert_constructor, ep_size=ep_size, num_experts=experts_num, min_capacity=0)
     
     def forward(self, x):
         """
         x.shape[-1] = hidden_size, output.shape[-1] = 1
         """
         moe_output, _, _ = self.moe_layer(x)
-        return moe_output.mean(dim=1)
+        return moe_output

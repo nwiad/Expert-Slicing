@@ -22,4 +22,4 @@ class FakeDataSet(Dataset):
         return self.length
     
     def __getitem__(self, index):
-        return torch.randn(1, dtype=torch.float16)[0], torch.randn(self.hidden_size, dtype=torch.float16)
+        return torch.randn(self.hidden_size, dtype=torch.float16), torch.randn(self.hidden_size, dtype=torch.float16)
