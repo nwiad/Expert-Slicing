@@ -1,5 +1,3 @@
 .DS_Store
-/expert_slicing/models/*
-# 忽略/expert_slicing/models/下的所有文件但保留/expert_slicing/models本身
-!/expert_slicing/models
+/expert_slicing/models/
 /expert_slicing/__pycache__
