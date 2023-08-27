@@ -1,4 +1,4 @@
-for i in $(seq 5000 500 10000)
+for i in $(seq $1 500 $2)
 do
     > sliced.txt
     > unsliced.txt
