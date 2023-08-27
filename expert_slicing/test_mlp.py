@@ -30,7 +30,7 @@ BATCH_SIZE = 64 # 批次大小
 vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
 validation_path = "dataset/validation.txt"
-save_path = "models/paramlp.pt"
+save_path = "models/para_mlp.pt"
 
 # 读取词向量模型
 vec = gensim.models.KeyedVectors.load_word2vec_format(vec_path, binary=True)
