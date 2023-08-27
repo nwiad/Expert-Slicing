@@ -1,7 +1,18 @@
+import matplotlib.pyplot as plt
 with open("results.txt", "r") as f:
     res = []
     while line:=f.readline():
-        res.append(eval(line))
-    print(res)
+        try:
+            res.append(eval(line))
+        except:
+            continue
+x = []
+y = []
 for res_dict in res:
-    print(res_dict['HIDEN_DIM'], res_dict['ratio'])
+    x.append(res_dict['HIDDEN_DIM'])
+    y.append(res_dict['ratio'])
+plt.scatter(x, y)
+plt.xlabel("HIDDEN_DIM")
+plt.ylabel("ratio")
+plt.show()
+plt.savefig("scatter.png")
