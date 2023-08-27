@@ -38,7 +38,7 @@ EXPERTS_NUM = 4 # 专家数量，可调，需要保证能被 EP_SIZE 整除
 vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
 validation_path = "dataset/validation.txt"
-save_path = "models/paramlp.pt"
+save_path = "models/moe.pt"
 
 # 读取词向量模型
 vec = gensim.models.KeyedVectors.load_word2vec_format(vec_path, binary=True)
