@@ -12,3 +12,14 @@ class SentimentTextDataset(Dataset):
     
     def __getitem__(self, index):
         return self.labels[index], self.matrixes[index]
+    
+class FakeDataSet(Dataset):
+    def __init__(self, length, hidden_size):
+        self.length = length
+        self.hidden_size = hidden_size
+
+    def __len__(self):
+        return self.length
+    
+    def __getitem__(self, index):
+        return torch.randn(1, dtype=torch.float16)[0], torch.randn(self.hidden_size, dtype=torch.float16)

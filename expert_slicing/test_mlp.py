@@ -10,15 +10,6 @@ from sklearn.metrics import f1_score
 from initialize import initialize_model_parallel
 import os
 
-torch.distributed.init_process_group(backend='nccl')
-world_size = int(os.environ['WORLD_SIZE'])
-local_rank = int(os.environ['LOCAL_RANK'])
-torch.cuda.set_device(local_rank)
-TP_SIZE = int(os.getenv('TP_SIZE'))
-assert type(TP_SIZE) == int, "TP_SIZE must be int"
-assert TP_SIZE >= 1 and TP_SIZE <= torch.cuda.device_count(), "TP_SIZE must be in [1, device_count]"
-initialize_model_parallel(TP_SIZE)
-
 TRUNCATION = 50 # 截断长度
 EMBEDDING_DIM = 50 # 词向量长度
 HIDDEN_DIM = 50 # 隐含层的维度
@@ -30,7 +21,16 @@ BATCH_SIZE = 64 # 批次大小
 vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
 validation_path = "dataset/validation.txt"
-save_path = "models/para_mlp.pt"
+save_path = "models/test/para_mlp.pt"
+
+torch.distributed.init_process_group(backend='nccl')
+world_size = int(os.environ['WORLD_SIZE'])
+local_rank = int(os.environ['LOCAL_RANK'])
+torch.cuda.set_device(local_rank)
+TP_SIZE = int(os.getenv('TP_SIZE'))
+assert type(TP_SIZE) == int, "TP_SIZE must be int"
+assert TP_SIZE >= 1 and TP_SIZE <= torch.cuda.device_count(), "TP_SIZE must be in [1, device_count]"
+initialize_model_parallel(TP_SIZE)
 
 # 读取词向量模型
 vec = gensim.models.KeyedVectors.load_word2vec_format(vec_path, binary=True)
@@ -88,7 +88,7 @@ device = torch.device("cuda")
 model = SentimentClassificationParallelMLP(
     vocab_size=len(key2index), embedding=vectors, embedding_dim=EMBEDDING_DIM, 
     hidden_size=HIDDEN_DIM, ffn_hidden_size=BATCH_SIZE * HIDDEN_DIM, output_dim=OUTPUT_DIM
-    ).to(device)
+).to(device)
 optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
 
 # 训练
@@ -128,4 +128,4 @@ for i in range(EPOCH):
             print("f1-score: {}".format(score))
 
 # 保存模型
-torch.save(model.state_dict(), save_path)
+# torch.save(model.state_dict(), save_path)

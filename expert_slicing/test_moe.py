@@ -12,18 +12,6 @@ import os
 from layers import ParallelMLP
 import deepspeed
 
-torch.distributed.init_process_group(backend='nccl')
-world_size = int(os.environ['WORLD_SIZE'])
-local_rank = int(os.environ['LOCAL_RANK'])
-torch.cuda.set_device(local_rank)
-TP_SIZE = int(os.getenv('TP_SIZE'))
-assert type(TP_SIZE) == int, "TP_SIZE must be int"
-assert TP_SIZE >= 1 and TP_SIZE <= torch.cuda.device_count(), "TP_SIZE must be in [1, device_count]"
-initialize_model_parallel(TP_SIZE)
-
-def slice_expert():
-    return ParallelMLP(hidden_size=HIDDEN_DIM, ffn_hidden_size=BATCH_SIZE * HIDDEN_DIM)
-
 EMBEDDING_DIM = 50 # 词向量长度，不可调
 HIDDEN_DIM = 50 # 隐含层的维度，需与词向量长度相同，不可调
 OUTPUT_DIM = 2 # 分类数，不可调
@@ -39,9 +27,21 @@ vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
 validation_path = "dataset/validation.txt"
 if os.getenv('EXPERT_SLICING') == '1':
-    save_path = "models/sliced_moe.pt"
+    save_path = "models/test/sliced_moe.pt"
 elif os.getenv('EXPERT_SLICING') == '0':
-    save_path = "models/unsliced_moe.pt"
+    save_path = "models/test/unsliced_moe.pt"
+
+torch.distributed.init_process_group(backend='nccl')
+world_size = int(os.environ['WORLD_SIZE'])
+local_rank = int(os.environ['LOCAL_RANK'])
+torch.cuda.set_device(local_rank)
+TP_SIZE = int(os.getenv('TP_SIZE'))
+assert type(TP_SIZE) == int, "TP_SIZE must be int"
+assert TP_SIZE >= 1 and TP_SIZE <= torch.cuda.device_count(), "TP_SIZE must be in [1, device_count]"
+initialize_model_parallel(TP_SIZE)
+
+def slice_expert():
+    return ParallelMLP(hidden_size=HIDDEN_DIM, ffn_hidden_size=BATCH_SIZE * HIDDEN_DIM)
 
 # 读取词向量模型
 vec = gensim.models.KeyedVectors.load_word2vec_format(vec_path, binary=True)
@@ -100,11 +100,11 @@ model = SentimentClassificationMoE(
     vocab_size=len(key2index), embedding=vectors, embedding_dim=EMBEDDING_DIM, 
     expert=None, expert_constructor=slice_expert, hidden_size=HIDDEN_DIM, 
     ep_size=EP_SIZE, experts_num=EXPERTS_NUM, output_dim=OUTPUT_DIM
-    ).to(device)
+).to(device)
 model, optimizer, _, _ = deepspeed.initialize(
     model=model, optimizer=Adam(model.parameters(), lr=LEARNING_RATE),
     model_parameters=model.parameters(), config="ds_config.json"
-    )
+)
 
 # 训练
 for i in range(EPOCH):
@@ -143,4 +143,4 @@ for i in range(EPOCH):
             print("f1-score: {}".format(score))
 
 # 保存模型
-torch.save(model.state_dict(), save_path)
+# torch.save(model.state_dict(), save_path)
