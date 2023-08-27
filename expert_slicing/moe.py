@@ -25,11 +25,10 @@ class SentimentClassificationMoE(nn.Module):
         tensor_embedding = torch.stack([torch.from_numpy(array).float() for array in embedding])
         self.embedding.weight.data.copy_(tensor_embedding)
         self.experts_num = experts_num
-        if expert_constructor is None and os.getenv('EXPERT_SLICING') != '1':
+        if expert is not None and not callable(expert_constructor):
             self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=expert, ep_size=experts_num, num_experts=experts_num)
-        elif expert_constructor is not None and os.getenv('EXPERT_SLICING') == '1':
+        elif callable(expert_constructor):
             assert expert is None, "expert and expert_constructor can't be set at the same time"
-            assert callable(expert_constructor), "expert_constructor must be callable"
             self.moe_layer = deepspeed.moe.layer.MoE(hidden_size=hidden_size, expert=None, expert_constructor=expert_constructor, ep_size=ep_size, num_experts=experts_num)
         self.fc = nn.Linear(hidden_size, output_dim)
 

@@ -68,9 +68,9 @@ class MoE(torch.nn.Module):
         assert noisy_gate_policy is None or noisy_gate_policy in ['None', 'Jitter', 'RSample'], \
             'Unsupported noisy_gate_policy: ' + noisy_gate_policy
 
-        if expert_constructor is None and os.getenv('EXPERT_SLICING') != '1':
+        if expert is not None and not callable(expert_constructor):
             experts = Experts(expert, self.num_local_experts, self.expert_group_name)
-        elif expert_constructor is not None and os.getenv('EXPERT_SLICING') == '1':
+        elif callable(expert_constructor):
             experts = Experts(expert=None, expert_constructor=expert_constructor, num_local_experts=self.num_local_experts, expert_group_name=self.expert_group_name)
         self.deepspeed_moe = MOELayer(TopKGate(hidden_size, num_experts, k, capacity_factor, eval_capacity_factor,
                                                min_capacity, noisy_gate_policy, drop_tokens, use_rts),

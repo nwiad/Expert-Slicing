@@ -37,12 +37,12 @@ class Experts(torch.nn.Module):
     def __init__(self, expert, num_local_experts=1, expert_group_name=None, expert_constructor=None):
         super(Experts, self).__init__()
 
-        if expert_constructor is None and os.getenv('EXPERT_SLICING') != '1':
+        if expert is not None and not callable(expert_constructor):
             self.deepspeed_experts = torch.nn.ModuleList([copy.deepcopy(expert) for i in range(num_local_experts)])
             # self.deepspeed_experts = torch.nn.ModuleList([FFN(IN_FEATURES, HIDDEN_FEATURES, OUTPUT_FEATURES) for i in range(num_local_experts)])
             # self.deepspeed_experts = torch.nn.ModuleList([slice_expert() for i in range(num_local_experts)])
             # 疑问：多卡训练中，expert 为 17 行定义的 FFN 时，将 41 行替换为 42 行，效果一致，替换为 43 行则准确率明显下降
-        elif expert_constructor is not None and os.getenv('EXPERT_SLICING') == '1':
+        elif callable(expert_constructor):
             self.deepspeed_experts = torch.nn.ModuleList([expert_constructor() for i in range(num_local_experts)])
 
         self.num_local_experts = num_local_experts

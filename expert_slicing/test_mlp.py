@@ -1,50 +1,36 @@
 import gensim
 import torch
-from moe import SentimentClassificationMoE
+from para_mlp import SentimentClassificationParallelMLP
 from dataset import SentimentTextDataset
 import numpy as np
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 import torch.nn.functional as F
 from sklearn.metrics import f1_score
-import torch.nn as nn
-import deepspeed
+from initialize import initialize_model_parallel
 import os
 
-EMBEDDING_DIM = 50 # 词向量长度，不可调
-HIDDEN_DIM = 50 # 隐含层的维度，需与词向量长度相同，不可调
-OUTPUT_DIM = 2 # 分类数，不可调
+torch.distributed.init_process_group(backend='nccl')
+world_size = int(os.environ['WORLD_SIZE'])
+local_rank = int(os.environ['LOCAL_RANK'])
+torch.cuda.set_device(local_rank)
+TP_SIZE = int(os.getenv('TP_SIZE'))
+assert type(TP_SIZE) == int, "TP_SIZE must be int"
+assert TP_SIZE >= 1 and TP_SIZE <= torch.cuda.device_count(), "TP_SIZE must be in [1, device_count]"
+initialize_model_parallel(TP_SIZE)
 
-TRUNCATION = 50 # 截断长度，可调
-EPOCH = 10 # 训练轮数，可调
-LEARNING_RATE = 1e-3 # 学习率，可调
-BATCH_SIZE = 64 # 批次大小，可调
-EP_SIZE = int(os.getenv('EP_SIZE')) # 由脚本参数设置
-EXPERTS_NUM = 4 # 专家数量，可调，需要保证能被 EP_SIZE 整除
-
-IN_FEATURES = HIDDEN_DIM # 需与隐含层维度相同，不可调
-HIDDEN_FEATURES = 4 * HIDDEN_DIM # 可调
-OUTPUT_FEATURES = HIDDEN_DIM # 不可调
-
-class FFN(nn.Module):
-    def __init__(self, in_features, hidden_dim, out_features):
-        super().__init__()
-        self.fc1 = nn.Linear(in_features, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, out_features)
-        self.relu = nn.ReLU()
-        self.dropout = nn.Dropout(0.1)
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-        return x
+TRUNCATION = 50 # 截断长度
+EMBEDDING_DIM = 50 # 词向量长度
+HIDDEN_DIM = 50 # 隐含层的维度
+OUTPUT_DIM = 2 # 分类数
+EPOCH = 10 # 训练轮数
+LEARNING_RATE = 1e-3 # 学习率
+BATCH_SIZE = 64 # 批次大小
 
 vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
 validation_path = "dataset/validation.txt"
-save_path = "models/unsliced_moe.pt"
+save_path = "models/paramlp.pt"
 
 # 读取词向量模型
 vec = gensim.models.KeyedVectors.load_word2vec_format(vec_path, binary=True)
@@ -99,46 +85,44 @@ validation_dataloader = build_dataloader(validation_path)
 
 # 创建模型
 device = torch.device("cuda")
-model = SentimentClassificationMoE(
-        vocab_size=len(key2index), embedding=vectors, embedding_dim=EMBEDDING_DIM, 
-        expert=FFN(IN_FEATURES, HIDDEN_FEATURES, OUTPUT_FEATURES), ep_size=EP_SIZE,
-        experts_num=EXPERTS_NUM, hidden_size=HIDDEN_DIM, output_dim=OUTPUT_DIM
+model = SentimentClassificationParallelMLP(
+    vocab_size=len(key2index), embedding=vectors, embedding_dim=EMBEDDING_DIM, 
+    hidden_size=HIDDEN_DIM, ffn_hidden_size=BATCH_SIZE * HIDDEN_DIM, output_dim=OUTPUT_DIM
     ).to(device)
-model_engine, optimizer, _, _ = deepspeed.initialize(model=model, optimizer=Adam(model.parameters(), lr=LEARNING_RATE),
-                                                        model_parameters=model.parameters(), config="ds_config.json")
-def convert(cuda_list: list):
-    return torch.as_tensor(cuda_list).cpu()
+optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
+
 # 训练
 for i in range(EPOCH):
-    model_engine.train()
+    model.train()
     accuracies = []
     for index, (labels, matrixes) in enumerate(dataloader):
-        prediction = model_engine(matrixes.to(device))
+        prediction = model(matrixes.to(device))
         loss = F.nll_loss(prediction, labels.to(device))
         result = torch.max(prediction, dim=1)[1]
         accuracy = torch.eq(result.to(device), labels.to(device)).float().mean()
         accuracies.append(accuracy)
-        model_engine.backward(loss)
-        model_engine.step()
-    average = np.array(convert(accuracies)).mean()
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    average = torch.mean(torch.as_tensor(accuracies))
     print("Epoch {epoch}: 准确率为{average}".format(epoch=i+1, average=average))
 
     if i%3 == 0:
-        model_engine.eval()
+        model.eval()
         y_true = []
         y_pred = []
         accuracies = []
         with torch.no_grad():
             for labels, matrixes in dataloader:
-                prediction = model_engine(matrixes.to(device))
+                prediction = model(matrixes.to(device))
                 result = torch.max(prediction, dim=1)[1]
                 accuracies.append(torch.eq(result.to(device), labels.to(device)).float().mean())
                 y_true.append(labels)
                 y_pred.append(result)
-            y_true = convert(torch.cat(y_true, dim=0))
-            y_pred = convert(torch.cat(y_pred, dim=0))
-            accuracy = np.array(convert(accuracies)).mean()
-            score = f1_score(y_true=y_true, y_pred=y_pred)
+            y_true = torch.cat(y_true, dim=0)
+            y_pred = torch.cat(y_pred, dim=0)
+            accuracy = torch.mean(torch.as_tensor(accuracies))
+            score = f1_score(y_true=torch.Tensor.cpu(y_true), y_pred=torch.Tensor.cpu(y_pred))
             print("验证：")
             print("准确率: {}".format(accuracy))
             print("f1-score: {}".format(score))

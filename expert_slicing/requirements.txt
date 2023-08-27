@@ -1,4 +1,0 @@
-# 默认已安装 pytorch 和 deepspeed
-gensim
-scikit-learn
-numpy
