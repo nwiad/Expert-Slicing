@@ -15,7 +15,7 @@ print("sliced:", sliced_time)
 print("unsliced:", unsliced_time)
 print("ratio:", sliced_time / unsliced_time)
 res = {}
-res['HIDEN_DIM'] = int(os.getenv('HIDDEN_DIM'))
+res['HIDDEN_DIM'] = int(os.getenv('HIDDEN_DIM'))
 res['sliced_time'] = sliced_time
 res['unsliced_time'] = unsliced_time
 res['ratio'] = sliced_time / unsliced_time
