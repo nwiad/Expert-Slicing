@@ -9,9 +9,9 @@ import deepspeed
 import time
 
 BATCH_SIZE = 1
-HIDDEN_DIM = int(os.getenv('HIDDEN_DIM', 10000))
+HIDDEN_DIM = int(os.getenv('HIDDEN_DIM', 5000))
 print("Setting HIDDEN_DIM to", HIDDEN_DIM)
-EXPERT_NUM = 4
+EXPERT_NUM = int(os.getenv('NUM_EXPERT'))
 EP_SIZE = int(os.getenv('EP_SIZE'))
 LENGTH = 10000
 LEARNING_RATE = 1e-3
@@ -19,12 +19,11 @@ LEARNING_RATE = 1e-3
 torch.distributed.init_process_group(backend='nccl')
 world_size = int(os.environ['WORLD_SIZE'])
 local_rank = int(os.environ['LOCAL_RANK'])
-print("world_size:", world_size)
-print("local_rank:", local_rank)
 torch.cuda.set_device(local_rank)
 TP_SIZE = int(os.getenv('TP_SIZE'))
 assert type(TP_SIZE) == int, "TP_SIZE must be int"
 assert TP_SIZE >= 1 and TP_SIZE <= torch.cuda.device_count(), "TP_SIZE must be in [1, device_count]"
+print(f"W{EP_SIZE} E{EXPERT_NUM} TP{TP_SIZE}")
 initialize_model_parallel(TP_SIZE)
 
 def slice_expert():
