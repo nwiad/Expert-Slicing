@@ -3,17 +3,11 @@ import torch
 _TENSOR_MODEL_PARALLEL_GROUP=None
 _MPU_TENSOR_MODEL_PARALLEL_RANK=None
 
-
-'''
-下面两个函数都是用来辅助切割的,不需要修改
-'''
-# 保证能整除
 def ensure_divisibility(numerator, denominator):
     """Ensure that numerator is divisible by the denominator."""
     assert numerator % denominator == 0, '{} is not divisible by {}'.format(
         numerator, denominator)
 
-# 整除函数
 def divide(numerator, denominator):
     """Ensure that numerator is divisible by the denominator and return
     the division value."""
@@ -32,8 +26,6 @@ def get_tensor_model_parallel_rank():
         return _MPU_TENSOR_MODEL_PARALLEL_RANK
     return torch.distributed.get_rank(group=get_tensor_model_parallel_group())
 
-
-# 按照最后一个dimension进行切割的函数
 def split_tensor_along_last_dim(tensor, num_partitions,
                                 contiguous_split_chunks=False):
     """Split a tensor along its last dimension.
@@ -82,9 +74,6 @@ def _split(input_, cut_size=2):
     output = input_list[rank].contiguous()
 
     return output
-'''
-----------Gather function----------
-'''
 
 def _gather(input_, cut_size=2):
     """Gather tensors and concatinate along the last dimension."""
