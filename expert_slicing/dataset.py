@@ -1,6 +1,8 @@
 from torch.utils.data import Dataset
 import torch
 
+SEQ_LEN = 1024
+
 class SentimentTextDataset(Dataset):
     def __init__(self, labels, matrixes):
         assert len(labels) == len(matrixes), "Bad Lengths"
@@ -22,4 +24,4 @@ class FakeDataSet(Dataset):
         return self.length
     
     def __getitem__(self, index):
-        return torch.randn(self.hidden_size, dtype=torch.float16), torch.randn(self.hidden_size, dtype=torch.float16)
+        return torch.randn(SEQ_LEN, self.hidden_size, dtype=torch.float16), torch.randn(SEQ_LEN, self.hidden_size, dtype=torch.float16)

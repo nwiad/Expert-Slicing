@@ -58,5 +58,7 @@ class MoE(nn.Module):
         """
         x.shape[-1] = hidden_size, output.shape[-1] = hidden_size
         """
+        # moe_output, cal_time= self.moe_layer(x)
         moe_output, _, _ = self.moe_layer(x)
+        # return moe_output, cal_time
         return moe_output

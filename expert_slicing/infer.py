@@ -8,9 +8,8 @@ from parallel_mlp.layers import ParallelMLP
 import deepspeed
 import time
 
-BATCH_SIZE = 1
+BATCH_SIZE = 8
 HIDDEN_DIM = int(os.getenv('HIDDEN_DIM', 5000))
-print("Setting HIDDEN_DIM to", HIDDEN_DIM)
 EXPERT_NUM = int(os.getenv('NUM_EXPERT'))
 EP_SIZE = int(os.getenv('EP_SIZE'))
 LENGTH = 10000
@@ -23,7 +22,7 @@ torch.cuda.set_device(local_rank)
 TP_SIZE = int(os.getenv('TP_SIZE'))
 assert type(TP_SIZE) == int, "TP_SIZE must be int"
 assert TP_SIZE >= 1 and TP_SIZE <= torch.cuda.device_count(), "TP_SIZE must be in [1, device_count]"
-print(f"W{EP_SIZE} E{EXPERT_NUM} TP{TP_SIZE}")
+
 initialize_model_parallel(TP_SIZE)
 
 def slice_expert():
@@ -31,7 +30,6 @@ def slice_expert():
 
 dataset = FakeDataSet(LENGTH, HIDDEN_DIM)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
-print("len(dataloader)", len(dataloader))
 device = torch.device('cuda')
 model = MoE(
     expert=None,
@@ -41,12 +39,31 @@ model = MoE(
     expert_constructor=slice_expert
 ).to(device)
 model, _, _, _ = deepspeed.initialize(model=model, config="infer_config.json")
+print(f"CUDA {local_rank}: HIDDEN_DIM={HIDDEN_DIM} W{EP_SIZE} E{EXPERT_NUM} TP{TP_SIZE}")
+print(f"CUDA {local_rank}: len(dataloader)={len(dataloader)}")
 model.eval()
 inference_time = 0
+cnt = 0
 with torch.no_grad():
+    print(f"CUDA {local_rank}: warming up")
     for labels, matrixes in dataloader:
+        prediction = model(matrixes.to(device))
+        cnt += 1
+        if cnt % 25 == 0:
+            print(f"CUDA {local_rank}: warm up: {cnt}%")
+        if cnt == 100:
+            break
+
+    print(f"CUDA {local_rank}: warmed up")
+    cnt = 0
+    for labels, matrixes in dataloader:
+        cnt += 1
+        if cnt % 1000 == 0:
+            print(f"CUDA {local_rank}: {cnt / len(dataloader) * 100}%")
+        torch.cuda.synchronize()
         start = time.time()
         prediction = model(matrixes.to(device))
+        torch.cuda.synchronize()
         end = time.time()
         inference_time += end - start
 if os.getenv('EXPERT_SLICING') == '1':
@@ -55,4 +72,4 @@ elif os.getenv('EXPERT_SLICING') == '0':
     filename = "bin/unsliced.txt"
 with open(filename, 'a') as f:
     f.write(f"{inference_time / len(dataloader)}\n")
-print(f"Average Inference Time: {inference_time / len(dataloader)}")
+print(f"CUDA {local_rank}: Average Inference Time={inference_time / len(dataloader)}s")
