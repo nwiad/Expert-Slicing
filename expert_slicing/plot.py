@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-with open("results.txt", "r") as f:
+with open("results_W4_E4_TP2.txt", "r") as f:
     results = []
     while line:=f.readline():
         try:

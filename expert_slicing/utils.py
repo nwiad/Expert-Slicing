@@ -1,7 +1,9 @@
 import torch
+import os
+from initialize import get_tensor_model_parallel_group, get_tensor_model_parallel_world_size, get_tensor_model_parallel_rank
 
-_TENSOR_MODEL_PARALLEL_GROUP=None
-_MPU_TENSOR_MODEL_PARALLEL_RANK=None
+# _TENSOR_MODEL_PARALLEL_GROUP=None
+# _MPU_TENSOR_MODEL_PARALLEL_RANK=None
 
 def ensure_divisibility(numerator, denominator):
     """Ensure that numerator is divisible by the denominator."""
@@ -14,17 +16,17 @@ def divide(numerator, denominator):
     ensure_divisibility(numerator, denominator)
     return numerator // denominator
 
-def get_tensor_model_parallel_group():
-    """Get the tensor model parallel group the caller rank belongs to."""
-    assert _TENSOR_MODEL_PARALLEL_GROUP is not None, \
-        'intra_layer_model parallel group is not initialized'
-    return _TENSOR_MODEL_PARALLEL_GROUP
-def get_tensor_model_parallel_rank():
-    """Return my rank for the tensor model parallel group."""
-    global _MPU_TENSOR_MODEL_PARALLEL_RANK
-    if _MPU_TENSOR_MODEL_PARALLEL_RANK is not None:
-        return _MPU_TENSOR_MODEL_PARALLEL_RANK
-    return torch.distributed.get_rank(group=get_tensor_model_parallel_group())
+# def get_tensor_model_parallel_group():
+#     """Get the tensor model parallel group the caller rank belongs to."""
+#     assert _TENSOR_MODEL_PARALLEL_GROUP is not None, \
+#         'intra_layer_model parallel group is not initialized'
+#     return _TENSOR_MODEL_PARALLEL_GROUP
+# def get_tensor_model_parallel_rank():
+#     """Return my rank for the tensor model parallel group."""
+#     global _MPU_TENSOR_MODEL_PARALLEL_RANK
+#     if _MPU_TENSOR_MODEL_PARALLEL_RANK is not None:
+#         return _MPU_TENSOR_MODEL_PARALLEL_RANK
+#     return torch.distributed.get_rank(group=get_tensor_model_parallel_group())
 
 def split_tensor_along_last_dim(tensor, num_partitions,
                                 contiguous_split_chunks=False):
@@ -49,11 +51,14 @@ def _reduce(input_):
     """All-reduce the input tensor across model parallel group."""
 
     # Bypass the function if we are using only 1 GPU.
-    if 2==1:
+    # if 2==1:
+    # if int(os.getenv('TP_SIZE'))==1:
+    if get_tensor_model_parallel_world_size() == 1:
         return input_
 
     # All-reduce.
-    torch.distributed.all_reduce(input_, group=torch.distributed.GroupMember.WORLD)
+    # torch.distributed.all_reduce(input_, group=torch.distributed.GroupMember.WORLD)
+    torch.distributed.all_reduce(input_, group=get_tensor_model_parallel_group())
 
     return input_
 
@@ -61,7 +66,9 @@ def _split(input_, cut_size=2):
     """Split the tensor along its last dimension and keep the
     corresponding slice."""
 
-    world_size = cut_size
+    # world_size = cut_size
+    # world_size = int(os.getenv('TP_SIZE'))
+    world_size = get_tensor_model_parallel_world_size()
     # Bypass the function if we are using only 1 GPU.
     if world_size==1:
         return input_
@@ -70,21 +77,26 @@ def _split(input_, cut_size=2):
     input_list = split_tensor_along_last_dim(input_, world_size)
 
     # Note: torch.split does not create contiguous tensors by default.
-    rank = torch.distributed.get_rank()
+    # rank = torch.distributed.get_rank()
+    rank = get_tensor_model_parallel_rank()
     output = input_list[rank].contiguous()
 
     return output
 
 def _gather(input_, cut_size=2):
     """Gather tensors and concatinate along the last dimension."""
-    world_size = cut_size
+    # world_size = cut_size
+    # world_size = int(os.getenv('TP_SIZE'))
+    world_size = get_tensor_model_parallel_world_size()
     if world_size==1:
         return input_
     last_dim = input_.dim() - 1
-    rank = torch.distributed.get_rank()
+    # rank = torch.distributed.get_rank()
+    rank = get_tensor_model_parallel_rank()
     tensor_list = [torch.empty_like(input_) for _ in range(world_size)]
     tensor_list[rank] = input_
-    torch.distributed.all_gather(tensor_list, input_)
+    # torch.distributed.all_gather(tensor_list, input_)
+    torch.distributed.all_gather(tensor_list, input_, group=get_tensor_model_parallel_group())
     output = torch.cat(tensor_list, dim=last_dim).contiguous()
     return output
 

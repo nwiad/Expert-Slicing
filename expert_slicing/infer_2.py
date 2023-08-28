@@ -11,7 +11,7 @@ import time
 BATCH_SIZE = 1
 HIDDEN_DIM = int(os.getenv('HIDDEN_DIM', 10000))
 print("Setting HIDDEN_DIM to", HIDDEN_DIM)
-EXPERT_NUM = 4
+EXPERT_NUM = 2
 EP_SIZE = int(os.getenv('EP_SIZE'))
 LENGTH = 10000
 LEARNING_RATE = 1e-3
@@ -46,6 +46,8 @@ model.eval()
 inference_time = 0
 with torch.no_grad():
     for labels, matrixes in dataloader:
+        # print("labels.shape", labels.shape)
+        # print("matrixes.shape", matrixes.shape)
         start = time.time()
         prediction = model(matrixes.to(device))
         end = time.time()

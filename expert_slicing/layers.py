@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from utils import *
-import os
+from initialize import get_tensor_model_parallel_world_size
 
 # Column Parallel Linear layer
 class ColumnParallelLinear(torch.nn.Module):
@@ -14,28 +14,40 @@ class ColumnParallelLinear(torch.nn.Module):
         self.gather_output = gather_output
         # Divide the weight matrix along the last dimension.
         # world_size = int(os.environ['WORLD_SIZE'])
-        world_size = int(os.getenv('TP_SIZE'))
-        self.output_size_per_partition = output_size//world_size
+        # world_size = int(os.getenv('TP_SIZE'))
+        world_size = get_tensor_model_parallel_world_size()
+        # self.output_size_per_partition = output_size//world_size
+        self.output_size_per_partition = divide(output_size, world_size)
         self.skip_bias_add = skip_bias_add
         # Initialize the original weight of the model
-        self.weight = nn.Parameter(torch.empty(self.output_size_per_partition,
-                                                self.input_size,device=torch.cuda.current_device(),
-                                                dtype=torch.float))
+        self.weight = nn.Parameter(torch.empty(
+            self.output_size_per_partition,
+            self.input_size,
+            device=torch.cuda.current_device(),
+            dtype=torch.float
+        ))
         # Initialize the weight
         nn.init.xavier_uniform_(self.weight)
         # Add the bias parameter
         if bias:
             self.bias = nn.Parameter(torch.empty(
-                self.output_size_per_partition,device=torch.cuda.current_device(), dtype=torch.float))
+                self.output_size_per_partition,
+                device=torch.cuda.current_device(), 
+                dtype=torch.float
+            ))
             # Always initialize bias to zero.
             with torch.no_grad():
                 self.bias.zero_()
-    # Forward functions
+        else:
+            self.register_parameter('bias', None)
+
     def forward(self, input_):
         input_parallel = copy_to_tensor_model_parallel_region(input_)
-        output_parallel = nn.functional.linear(input_parallel, self.weight)
+        bias = self.bias if not self.skip_bias_add else None
+        output_parallel = nn.functional.linear(input_parallel, self.weight, bias)
         if self.gather_output:
-            output = OutputAdapter.apply(output_parallel)
+            # output = OutputAdapter.apply(output_parallel)
+            output = gather_from_tensor_model_parallel_region(output_parallel)
         else:
             output = output_parallel
         output_bias = self.bias if self.skip_bias_add else None
@@ -53,19 +65,25 @@ class RowParallelLinear(torch.nn.Module):
         self.input_is_parallel = input_is_parallel
         # Divide the weight matrix along the last dimension.
         # world_size = int(os.environ['WORLD_SIZE'])
-        world_size = int(os.getenv('TP_SIZE'))
+        # world_size = int(os.getenv('TP_SIZE'))
+        world_size = get_tensor_model_parallel_world_size()
         self.input_size_per_partition = divide(input_size, world_size)
         self.skip_bias_add = skip_bias_add
         print(self.output_size," ", self.input_size_per_partition)
         self.weight = nn.Parameter(torch.empty(
-                self.output_size, self.input_size_per_partition,
-                device=torch.cuda.current_device(), dtype=torch.float))
+                self.output_size, 
+                self.input_size_per_partition,
+                device=torch.cuda.current_device(), 
+                dtype=torch.float
+        ))
         # Initialize the weight
         nn.init.xavier_uniform_(self.weight)
         if bias:
             self.bias = nn.Parameter(torch.empty(
-                    self.output_size, device=torch.cuda.current_device(),
-                    dtype=torch.float))
+                    self.output_size, 
+                    device=torch.cuda.current_device(),
+                    dtype=torch.float
+            ))
             # Always initialize bias to zero.
             with torch.no_grad():
                 self.bias.zero_()

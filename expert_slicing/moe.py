@@ -58,7 +58,7 @@ class MoE(nn.Module):
     
     def forward(self, x):
         """
-        x.shape[-1] = hidden_size, output.shape[-1] = 1
+        x.shape[-1] = hidden_size, output.shape[-1] = hidden_size
         """
         moe_output, _, _ = self.moe_layer(x)
         return moe_output
