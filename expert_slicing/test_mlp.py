@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 import torch.nn.functional as F
 from sklearn.metrics import f1_score
-from initialize import initialize_model_parallel
+from parallel_mlp.initialize import initialize_model_parallel
 import os
 
 TRUNCATION = 50 # 截断长度
@@ -21,7 +21,6 @@ BATCH_SIZE = 64 # 批次大小
 vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
 validation_path = "dataset/validation.txt"
-save_path = "models/test/para_mlp.pt"
 
 torch.distributed.init_process_group(backend='nccl')
 world_size = int(os.environ['WORLD_SIZE'])
@@ -126,6 +125,3 @@ for i in range(EPOCH):
             print("验证：")
             print("准确率: {}".format(accuracy))
             print("f1-score: {}".format(score))
-
-# 保存模型
-torch.save(model.state_dict(), save_path)

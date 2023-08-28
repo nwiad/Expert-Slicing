@@ -2,9 +2,9 @@ import torch
 from moe import MoE
 from dataset import FakeDataSet
 from torch.utils.data import DataLoader
-from initialize import initialize_model_parallel
+from parallel_mlp.initialize import initialize_model_parallel
 import os
-from layers import ParallelMLP
+from parallel_mlp.layers import ParallelMLP
 import deepspeed
 import time
 
@@ -50,9 +50,9 @@ with torch.no_grad():
         end = time.time()
         inference_time += end - start
 if os.getenv('EXPERT_SLICING') == '1':
-    filename = "sliced.txt"
+    filename = "bin/sliced.txt"
 elif os.getenv('EXPERT_SLICING') == '0':
-    filename = "unsliced.txt"
+    filename = "bin/unsliced.txt"
 with open(filename, 'a') as f:
     f.write(f"{inference_time / len(dataloader)}\n")
 print(f"Average Inference Time: {inference_time / len(dataloader)}")

@@ -7,9 +7,9 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 import torch.nn.functional as F
 from sklearn.metrics import f1_score
-from initialize import initialize_model_parallel
+from parallel_mlp.initialize import initialize_model_parallel
 import os
-from layers import ParallelMLP
+from parallel_mlp.layers import ParallelMLP
 import deepspeed
 
 EMBEDDING_DIM = 50 # 词向量长度，不可调
@@ -26,10 +26,6 @@ EXPERTS_NUM = 4 # 专家数量，可调，需要保证能被 EP_SIZE 整除
 vec_path = "dataset/wiki_word2vec_50.bin"
 train_path = "dataset/train.txt"
 validation_path = "dataset/validation.txt"
-if os.getenv('EXPERT_SLICING') == '1':
-    save_path = "models/test/sliced_moe.pt"
-elif os.getenv('EXPERT_SLICING') == '0':
-    save_path = "models/test/unsliced_moe.pt"
 
 torch.distributed.init_process_group(backend='nccl')
 world_size = int(os.environ['WORLD_SIZE'])
@@ -141,6 +137,3 @@ for i in range(EPOCH):
             print("验证：")
             print("准确率: {}".format(accuracy))
             print("f1-score: {}".format(score))
-
-# 保存模型
-torch.save(model.state_dict(), save_path)

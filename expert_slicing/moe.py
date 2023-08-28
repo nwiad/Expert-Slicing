@@ -1,9 +1,7 @@
-# from deepspeed.moe.layer import MoE
 import deepspeed
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import os
 
 class SentimentClassificationMoE(nn.Module):
     def __init__(self, vocab_size, embedding, embedding_dim, expert, hidden_size, ep_size, experts_num, output_dim, expert_constructor=None):

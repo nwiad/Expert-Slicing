@@ -1,4 +1,4 @@
-from layers import ParallelMLP
+from parallel_mlp.layers import ParallelMLP
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

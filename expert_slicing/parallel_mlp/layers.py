@@ -1,7 +1,7 @@
 import torch
 from torch import nn
-from utils import *
-from initialize import get_tensor_model_parallel_world_size
+from .utils import *
+from .initialize import get_tensor_model_parallel_world_size
 
 # Column Parallel Linear layer
 class ColumnParallelLinear(torch.nn.Module):

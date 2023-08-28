@@ -1,6 +1,5 @@
 import torch
-import os
-from initialize import get_tensor_model_parallel_group, get_tensor_model_parallel_world_size, get_tensor_model_parallel_rank
+from .initialize import get_tensor_model_parallel_group, get_tensor_model_parallel_world_size, get_tensor_model_parallel_rank
 
 # _TENSOR_MODEL_PARALLEL_GROUP=None
 # _MPU_TENSOR_MODEL_PARALLEL_RANK=None
@@ -15,18 +14,6 @@ def divide(numerator, denominator):
     the division value."""
     ensure_divisibility(numerator, denominator)
     return numerator // denominator
-
-# def get_tensor_model_parallel_group():
-#     """Get the tensor model parallel group the caller rank belongs to."""
-#     assert _TENSOR_MODEL_PARALLEL_GROUP is not None, \
-#         'intra_layer_model parallel group is not initialized'
-#     return _TENSOR_MODEL_PARALLEL_GROUP
-# def get_tensor_model_parallel_rank():
-#     """Return my rank for the tensor model parallel group."""
-#     global _MPU_TENSOR_MODEL_PARALLEL_RANK
-#     if _MPU_TENSOR_MODEL_PARALLEL_RANK is not None:
-#         return _MPU_TENSOR_MODEL_PARALLEL_RANK
-#     return torch.distributed.get_rank(group=get_tensor_model_parallel_group())
 
 def split_tensor_along_last_dim(tensor, num_partitions,
                                 contiguous_split_chunks=False):
