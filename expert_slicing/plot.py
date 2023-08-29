@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
-B = 8
-SQ = 1024
+B = 1
+SQ = 1
 
 def plot(w, e, tp):
     s = f"_W{w}_E{e}_TP{tp}"
@@ -29,15 +29,16 @@ def plot(w, e, tp):
     # 散点图
     plt.figure()
     plt.scatter(x, y)
-    t = (w+1.0)/(2*w)
+    plt.plot([0, 16500], [1, 1], color='red', linewidth=2.0, linestyle='--')
+    plt.text(16500, 1, 'Threshold Value (Ratio=1.0)', ha='right', va='bottom', fontsize=10)
+    t = 1.0 / w
     plt.plot([0, 16500], [t, t], color='red', linewidth=2.0, linestyle='--')
-    plt.text(16500, t, 'theoretical limit', ha='right', va='bottom', fontsize=10)
+    plt.text(16500, t, 'Theoretical Limit', ha='right', va='bottom', fontsize=10)
     plt.xlabel("HIDDEN_DIM")
     plt.ylabel("Ratio of Inference Time")
     plt.savefig(f"pics_B{B}_SQ{SQ}/pics"+s+"/scatter"+s+".png")
 
     plt.figure()
-    # plt.ylim(0, 0.014)
     plt.xlabel("HIDDEN_DIM")
     plt.ylabel("Inference Time")
     p1 = plt.scatter(x, sliced_time)
@@ -47,15 +48,16 @@ def plot(w, e, tp):
     # 折线图
     plt.figure()
     plt.plot(x, y)
-    t = (w+1.0)/(2*w)
+    plt.plot([0, 16500], [1, 1], color='red', linewidth=2.0, linestyle='--')
+    plt.text(16500, 1, 'Threshold Value (Ratio=1.0)', ha='right', va='bottom', fontsize=10)
+    t = 1.0 / w
     plt.plot([0, 16500], [t, t], color='red', linewidth=2.0, linestyle='--')
-    plt.text(16500, t, 'theoretical limit', ha='right', va='bottom', fontsize=10)
+    plt.text(16500, t, 'Theoretical Limit', ha='right', va='bottom', fontsize=10)
     plt.xlabel("HIDDEN_DIM")
     plt.ylabel("Ratio of Inference Time")
     plt.savefig(f"pics_B{B}_SQ{SQ}/pics"+s+"/line"+s+".png")
 
     plt.figure()
-    # plt.ylim(0, 0.014)
     plt.xlabel("HIDDEN_DIM")
     plt.ylabel("Inference Time")
     p1, =plt.plot(x, sliced_time)
@@ -63,8 +65,11 @@ def plot(w, e, tp):
     plt.legend([p1, p2], ["Sliced MoE", "Unsliced MoE"])
     plt.savefig(f"pics_B{B}_SQ{SQ}/pics"+s+"/sep_line"+s+".png")
 
-
-plot(2,2,2)
-plot(2,4,2)
-plot(4,4,2)
-plot(4,4,4)
+print(f"Plotting B={B} SQ={SQ}")
+args =[(2,2,2), (2,4,2), (4,4,2), (4,4,4)]
+for arg in args:
+    try:
+        plot(*arg)
+    except Exception as e:
+        print(f"Failed for {arg}: {e}")
+        continue
