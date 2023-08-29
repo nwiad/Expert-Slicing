@@ -48,8 +48,8 @@ with torch.no_grad():
     _, dummy_input = dataset[0]
     for i in range(100):
         prediction = model(dummy_input.to(device))
-        if i % 10 == 0:
-            print(f"CUDA {local_rank}: warm up: {i * 2}%")
+        if (i+1) % 10 == 0:
+            print(f"CUDA {local_rank}: warm up: {i}%")
 
     print(f"CUDA {local_rank}: warmed up")
     cnt = 0
