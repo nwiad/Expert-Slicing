@@ -12,8 +12,7 @@ BATCH_SIZE = 8
 HIDDEN_DIM = int(os.getenv('HIDDEN_DIM', 5000))
 EXPERT_NUM = int(os.getenv('NUM_EXPERT'))
 EP_SIZE = int(os.getenv('EP_SIZE'))
-LENGTH = 10000
-LEARNING_RATE = 1e-3
+LENGTH = 1000
 
 torch.distributed.init_process_group(backend='nccl')
 world_size = int(os.environ['WORLD_SIZE'])
@@ -29,7 +28,7 @@ def slice_expert():
     return ParallelMLP(hidden_size=HIDDEN_DIM, ffn_hidden_size=4 * HIDDEN_DIM)
 
 dataset = FakeDataSet(LENGTH, HIDDEN_DIM)
-dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=BATCH_SIZE)
 device = torch.device('cuda')
 model = MoE(
     expert=None,
@@ -46,19 +45,17 @@ inference_time = 0
 cnt = 0
 with torch.no_grad():
     print(f"CUDA {local_rank}: warming up")
-    for labels, matrixes in dataloader:
-        prediction = model(matrixes.to(device))
-        cnt += 1
-        if cnt % 25 == 0:
-            print(f"CUDA {local_rank}: warm up: {cnt}%")
-        if cnt == 100:
-            break
+    _, dummy_input = dataset[0]
+    for i in range(100):
+        prediction = model(dummy_input.to(device))
+        if i % 10 == 0:
+            print(f"CUDA {local_rank}: warm up: {i * 2}%")
 
     print(f"CUDA {local_rank}: warmed up")
     cnt = 0
     for labels, matrixes in dataloader:
         cnt += 1
-        if cnt % 1000 == 0:
+        if cnt % 25 == 0:
             print(f"CUDA {local_rank}: {cnt / len(dataloader) * 100}%")
         torch.cuda.synchronize()
         start = time.time()

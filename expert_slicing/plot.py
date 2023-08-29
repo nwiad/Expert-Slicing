@@ -31,7 +31,7 @@ def plot(w, e, tp):
     plt.savefig("pics/pics"+s+"/scatter"+s+".png")
 
     plt.figure()
-    plt.ylim(0, 0.014)
+    # plt.ylim(0, 0.014)
     plt.xlabel("HIDDEN_DIM")
     plt.ylabel("Inference Time")
     p1 = plt.scatter(x, sliced_time)
@@ -49,7 +49,7 @@ def plot(w, e, tp):
     plt.savefig("pics/pics"+s+"/line"+s+".png")
 
     plt.figure()
-    plt.ylim(0, 0.014)
+    # plt.ylim(0, 0.014)
     plt.xlabel("HIDDEN_DIM")
     plt.ylabel("Inference Time")
     p1, =plt.plot(x, sliced_time)
@@ -58,6 +58,6 @@ def plot(w, e, tp):
     plt.savefig("pics/pics"+s+"/sep_line"+s+".png")
 
 plot(2,2,2)
-plot(2,4,2)
-plot(4,4,2)
-plot(4,4,4)
+# plot(2,4,2)
+# plot(4,4,2)
+# plot(4,4,4)
