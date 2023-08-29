@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
-B = 1
-SQ = 1
+B = 8
+SQ = 1024
 
 def plot(w, e, tp):
     s = f"_W{w}_E{e}_TP{tp}"
@@ -31,7 +31,7 @@ def plot(w, e, tp):
     plt.scatter(x, y)
     plt.plot([0, 16500], [1, 1], color='red', linewidth=2.0, linestyle='--')
     plt.text(16500, 1, 'Threshold Value (Ratio=1.0)', ha='right', va='bottom', fontsize=10)
-    t = 1.0 / w
+    t = 1.0 / tp
     plt.plot([0, 16500], [t, t], color='red', linewidth=2.0, linestyle='--')
     plt.text(16500, t, 'Theoretical Limit', ha='right', va='bottom', fontsize=10)
     plt.xlabel("HIDDEN_DIM")
@@ -50,7 +50,7 @@ def plot(w, e, tp):
     plt.plot(x, y)
     plt.plot([0, 16500], [1, 1], color='red', linewidth=2.0, linestyle='--')
     plt.text(16500, 1, 'Threshold Value (Ratio=1.0)', ha='right', va='bottom', fontsize=10)
-    t = 1.0 / w
+    t = 1.0 /tp
     plt.plot([0, 16500], [t, t], color='red', linewidth=2.0, linestyle='--')
     plt.text(16500, t, 'Theoretical Limit', ha='right', va='bottom', fontsize=10)
     plt.xlabel("HIDDEN_DIM")
