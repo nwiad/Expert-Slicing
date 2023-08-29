@@ -24,3 +24,9 @@ Looping for W2 E4 TP2
 {'HIDDEN_DIM': 4096, 'sliced_time': 0.17720166301727297, 'unsliced_time': 0.11545479011535645, 'ratio': 1.5348143012535231}
 {'HIDDEN_DIM': 5140, 'sliced_time': 0.13711331081390382, 'unsliced_time': 0.16933552169799804, 'ratio': 0.8097138121937522}
 {'HIDDEN_DIM': 6144, 'sliced_time': 0.1634676399230957, 'unsliced_time': 0.2276430025100708, 'ratio': 0.7180876992512167}
+{'HIDDEN_DIM': 8192, 'sliced_time': 0.2680223083496094, 'unsliced_time': 0.30918469429016116, 'ratio': 0.8668679701786207}
+{'HIDDEN_DIM': 10240, 'sliced_time': 0.30392081260681153, 'unsliced_time': 0.43126989459991455, 'ratio': 0.7047114032588718}
+{'HIDDEN_DIM': 12288, 'sliced_time': 0.39447373008728026, 'unsliced_time': 0.6014808320999145, 'ratio': 0.6558375745908268}
+{'HIDDEN_DIM': 16384, 'sliced_time': 0.6182178268432617, 'unsliced_time': nan, 'ratio': nan}
+Looping for W4 E4 TP2
+{'HIDDEN_DIM': 512, 'sliced_time': 0.07408753538131714, 'unsliced_time': 0.07293606519699097, 'ratio': 1.0157873910693729}

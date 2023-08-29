@@ -19,9 +19,10 @@ class FakeDataSet(Dataset):
     def __init__(self, length, hidden_size):
         self.length = length
         self.hidden_size = hidden_size
+        self.fakedata = torch.randn(SEQ_LEN, self.hidden_size, dtype=torch.float16)
 
     def __len__(self):
         return self.length
     
     def __getitem__(self, index):
-        return torch.randn(SEQ_LEN, self.hidden_size, dtype=torch.float16), torch.randn(SEQ_LEN, self.hidden_size, dtype=torch.float16)
+        return self.fakedata, self.fakedata
