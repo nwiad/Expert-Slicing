@@ -1,8 +1,5 @@
 import matplotlib.pyplot as plt
 
-B = 8
-SQ = 1024
-
 def plot(w, e, tp):
     s = f"_W{w}_E{e}_TP{tp}"
     with open(f"res_B{B}_SQ{SQ}/results"+s+".txt", "r") as f:
@@ -108,11 +105,13 @@ def all_plot(w, e, tp):
     ax2.set_ylabel("Inference Time")
     p1, = ax2.plot(x, sliced_time, color='blue')
     p2, = ax2.plot(x, unsliced_time, color='orange')
-    plt.legend([p1, p2, p], ["Sliced MoE", "Unsliced MoE", "Ratio of Inference Time"])
+    plt.legend([p1, p2, p], ["Inference Time of Sliced MoE", "Inference Time of Unsliced MoE", "Ratio of Inference Time"])
     # 添加标题： title
     plt.title(f"B={B}, SQ={SQ}, E={e}, TP={tp}")
     plt.savefig(f"pics_B{B}_SQ{SQ}/pics"+s+"/all_line"+s+".png")
 
+B = 1
+SQ = 1
 print(f"Plotting B={B} SQ={SQ}")
 args =[(2,2,2), (2,4,2), (4,4,2), (4,4,4)]
 for arg in args:
