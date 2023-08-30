@@ -9,7 +9,7 @@
 - $B_{comp}$: computations per second
 - $B_{comm}$: communications per second
 - $r$: each token is routed to top-$r$ experts ($1\le r \lt N$)
-- $T_{0}$: time consumed to dispatch a batch of tokens when there is no slicing (it is also the time consumed to combine outputs of experts), note that $T_0\le \frac{\frac{b}{d} \cdot h(d-1)}{B_{comm}} = \frac{bh(d-1)}{dB_{comm}}$
+- $T_{0}$: time consumed to dispatch a batch of tokens when there is no slicing (it is also the time consumed to combine outputs of experts), note that $T_0\le \frac{\frac{b}{d} \cdot hr(d-1)}{B_{comm}} = \frac{bhr(d-1)}{dB_{comm}}$
 - $\delta$: time saved by doing expert-slicing per batch
 - $R$: ratio of sliced MoE inference time over unsliced MoE inference time
 
